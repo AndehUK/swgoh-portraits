@@ -109,7 +109,7 @@ func createPortraitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	relicLevel, err := getIntFromQuery(query, "relic_level")
-	if gearLevel != 13 && err == nil {
+	if gearLevel != 13 && relicLevel != 0 && err == nil {
 		http.Error(w, "The relic_level should not be provided if gear_level is not 13", http.StatusBadRequest)
 		return
 	}
@@ -222,7 +222,7 @@ func buildPortrait(portrait CharacterPortrait, charData Character) (image.Image,
 		if err != nil {
 			return nil, err
 		}
-		draw.Draw(finalImage, finalImage.Bounds(), borderImg, image.Point{}, draw.Over)
+		centerImageOnCanvas(borderImg, finalImage)
 	} else {
 		// Load and draw relic border for gear level 13
 		// Assuming relic border path is similar to gear
@@ -309,4 +309,22 @@ func placeImageOnCanvas(src image.Image) (*image.RGBA, error) {
 	draw.Draw(canvas, srcBounds.Add(drawPoint), src, srcBounds.Min, draw.Over)
 
 	return canvas, nil
+}
+
+func centerImageOnCanvas(src image.Image, dest *image.RGBA) {
+	// Calculate the position to center src on dest
+	srcBounds := src.Bounds()
+	destBounds := dest.Bounds()
+	srcSize := srcBounds.Size()
+	destSize := destBounds.Size()
+	offset := image.Pt((destSize.X-srcSize.X)/2, (destSize.Y-srcSize.Y)/2)
+
+	// The point on the canvas where the src image will be drawn
+	drawPoint := image.Point{
+		X: offset.X,
+		Y: offset.Y,
+	}
+
+	// Draw the src image onto the dest, centered
+	draw.Draw(dest, srcBounds.Add(drawPoint), src, srcBounds.Min, draw.Over)
 }
